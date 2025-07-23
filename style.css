@@ -1,6 +1,6 @@
 body {
   background: linear-gradient(to bottom, #f8f8f5, #ffffff);
-  font-family: 'Noto Serif TC', serif;
+  font-family: 'Noto Serif TC', 'Yu Mincho', 'Hiragino Mincho ProN', 'serif';
   color: #333;
 }
 
