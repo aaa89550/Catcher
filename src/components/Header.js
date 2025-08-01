@@ -295,7 +295,6 @@ const Header = () => {
                   };
                 }}
               />
-              <span className="text-xl font-bold text-gray-800 hidden sm:block">Catcher</span>
             </Link>
           </div>
 
