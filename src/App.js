@@ -56,9 +56,11 @@ const AppContent = () => {
 };
 
 function App() {
+  const basename = process.env.NODE_ENV === 'production' ? '/Catcher' : '';
+  
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={basename}>
         <AppContent />
       </Router>
     </AuthProvider>
