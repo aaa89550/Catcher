@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 整體背景 */
+body {
+  @apply bg-cream-50;
+}
+
+/* 服務分類卡片 - 正方形九宮格設計 */
+.service-card {
+  @apply bg-white border border-primary-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-4 text-center cursor-pointer;
+  @apply hover:border-primary-300 hover:-translate-y-1;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.service-card:hover {
+  @apply bg-primary-50;
+}
+
+.service-card h3 {
+  @apply text-primary-800 text-sm font-semibold;
+}
+
+.service-card p {
+  @apply text-primary-600 text-xs;
+}
+
+/* 精選服務卡片 */
+.featured-service {
+  @apply bg-white border border-secondary-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-4;
+  @apply hover:border-secondary-300;
+}
+
+/* 主要按鈕 */
+.btn-primary {
+  @apply bg-primary-600 text-white rounded-md px-4 py-2 text-sm hover:bg-primary-700 transition-colors duration-200;
+  @apply shadow-sm hover:shadow-md;
+}
+
+/* 強調按鈕 */
+.btn-accent {
+  @apply bg-accent-500 text-white rounded-md px-4 py-2 text-sm hover:bg-accent-600 transition-colors duration-200;
+  @apply shadow-sm hover:shadow-md;
+}
+
+/* 亮點按鈕 */
+.btn-highlight {
+  @apply bg-highlight-500 text-white rounded-md px-4 py-2 text-sm hover:bg-highlight-600 transition-colors duration-200;
+  @apply shadow-sm hover:shadow-md;
+}
+
+/* 警示標籤 */
+.alert-warning {
+  @apply bg-warning-100 text-warning-800 border border-warning-300 rounded-md px-3 py-1 text-xs;
+}
+
+/* 容器縮小並置中 */
+.container-sm {
+  @apply max-w-4xl mx-auto px-4;
+}
+
+.container-xs {
+  @apply max-w-3xl mx-auto px-4;
+}
+
+/* 價格拉條樣式 */
+.slider-thumb {
+  pointer-events: none;
+}
+
+.slider-thumb::-webkit-slider-thumb {
+  pointer-events: all;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid theme('colors.primary.500');
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.slider-thumb::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slider-thumb::-moz-range-thumb {
+  pointer-events: all;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid theme('colors.primary.500');
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Prose 樣式 for 服務詳細頁面 */
+.prose {
+  color: theme('colors.primary.700');
+  max-width: none;
+}
+
+.prose h3 {
+  color: theme('colors.primary.800');
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+}
+
+.prose ul, .prose ol {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  color: theme('colors.primary.600');
+}
+
+.prose ul > li {
+  position: relative;
+}
+
+.prose ul > li::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.6rem;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 50%;
+  background-color: theme('colors.accent.500');
+}
+
+.prose ol > li {
+  padding-left: 0.25rem;
+}
+
+/* Line clamp 工具類 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

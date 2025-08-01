@@ -1,0 +1,73 @@
+/* 色票主題設計，根據 images/色票.jpg
+   你可以根據實際色票內容微調色碼 */
+/* 色票主題設計：#73E0D4、#84FACE、#F06F5A、#FA73AE、#F0EC92 */
+:root {
+  --primary: #F8ECD6;    /* 米黃色主底色 */
+  --secondary: #73E0D4;  /* 輔助色 */
+  --accent: #F06F5A;     /* 強調色（跳色按鈕） */
+  --highlight: #FA73AE;  /* 高亮色 */
+  --warning: #F0EC92;    /* 警示/提示色 */
+  --background: #F8ECD6; /* 背景色（米黃色） */
+  --text: #222;          /* 文字色 */
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  padding: 2rem;
+}
+
+button {
+  background: var(--secondary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(250, 115, 174, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-accent {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 0.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(240, 111, 90, 0.12);
+  transition: background 0.2s;
+}
+.btn-accent:hover {
+  background: var(--highlight) !important;
+}
+
+button:hover {
+  background: var(--highlight);
+  box-shadow: 0 4px 16px rgba(115, 224, 212, 0.12);
+}
+
+
+/* 輔助元件色彩設計 */
+.card {
+  background: var(--secondary);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(240, 236, 146, 0.08);
+  padding: 1.5rem;
+  color: var(--text);
+}
+
+.alert {
+  background: var(--warning);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.highlight {
+  background: var(--highlight);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+}
