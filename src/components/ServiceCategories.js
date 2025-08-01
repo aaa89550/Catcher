@@ -108,20 +108,24 @@ const ServiceCategories = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 justify-items-center max-w-2xl mx-auto">
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 md:gap-6 justify-items-center max-w-4xl mx-auto">
           {categories.map((category) => (
             <Link
               key={category.id}
               to={`/services/${encodeURIComponent(category.title)}`}
-              className="service-card group"
+              className="service-card-mobile group flex flex-col items-center text-center p-3 md:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 w-full max-w-[120px] md:max-w-none"
             >
-              <div className="text-primary-600 mb-2 group-hover:text-primary-700 group-hover:scale-110 transition-all duration-300">
-                {category.icon}
+              <div className="text-primary-600 mb-2 group-hover:text-primary-700 transition-all duration-300 flex-shrink-0">
+                <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
+                  {React.cloneElement(category.icon, {
+                    className: "w-5 h-5 md:w-8 md:h-8"
+                  })}
+                </div>
               </div>
-              <h3 className="mb-1">
+              <h3 className="text-xs md:text-sm font-medium text-gray-800 mb-1 leading-tight">
                 {category.title}
               </h3>
-              <p>
+              <p className="text-[10px] md:text-xs text-gray-600 leading-tight hidden md:block">
                 {category.description}
               </p>
             </Link>
