@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { realtimeDb } from '../firebase/config';
+import { ref, push, onValue, off, query, orderByChild, limitToLast, serverTimestamp, set } from 'firebase/database';
 
 const ChatPage = () => {
   const navigate = useNavigate();
@@ -11,6 +13,11 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const messagesEndRef = useRef(null);
+
+  // Firebase listeners
+  const conversationsRef = useRef(null);
+  const messagesRef = useRef(null);
 
   // 從 URL 參數獲取聊天對象資訊
   const creatorId = searchParams.get('creatorId');
@@ -28,105 +35,234 @@ const ChatPage = () => {
     }
   }, [loading, isRealUser, navigate]);
 
-  useEffect(() => {
-    // 只有在用戶已登入時才載入聊天記錄
-    if (!isRealUser) return;
-    
-    // 模擬載入聊天記錄
-    const loadConversations = async () => {
-      setIsLoading(true);
-      try {
-        // 這裡將來會串接真實的聊天服務
-        const mockConversations = [
-          {
-            id: '1',
-            participantName: '設計師小王',
-            participantAvatar: '/api/placeholder/40/40',
-            lastMessage: '您好，關於您的設計需求...',
-            lastMessageTime: '14:30',
-            unreadCount: 2
-          },
-          {
-            id: '2',
-            participantName: '攝影師小李',
-            participantAvatar: '/api/placeholder/40/40',
-            lastMessage: '拍攝時間確認一下',
-            lastMessageTime: '13:45',
-            unreadCount: 0
-          }
-        ];
+  // 生成聊天室ID的函數
+  const generateChatId = (userId1, userId2) => {
+    return [userId1, userId2].sort().join('_');
+  };
 
-        // 如果有指定聊天對象，創建新對話
+  // 滾動到最新訊息
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // 載入對話列表
+  const loadConversations = () => {
+    if (!isRealUser) return;
+
+    const userConversationsRef = ref(realtimeDb, `users/${user.uid}/conversations`);
+    
+    const unsubscribe = onValue(userConversationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const conversationsList = Object.entries(data).map(([id, conv]) => ({
+          id,
+          ...conv,
+        })).sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
+        
+        setConversations(conversationsList);
+        
+        // 如果有指定的創作者，自動選擇或創建對話
         if (creatorId && creatorName) {
-          const existingConversation = mockConversations.find(
-            conv => conv.participantName === creatorName
+          const existingConv = conversationsList.find(
+            conv => conv.participantId === creatorId
           );
           
-          if (!existingConversation) {
-            const newConversation = {
-              id: `new_${creatorId}`,
-              participantName: creatorName,
-              participantAvatar: '/api/placeholder/40/40',
-              lastMessage: '開始新對話',
-              lastMessageTime: '剛剛',
-              unreadCount: 0
-            };
-            mockConversations.unshift(newConversation);
-            setSelectedConversation(newConversation);
+          if (existingConv) {
+            setSelectedConversation(existingConv);
           } else {
-            setSelectedConversation(existingConversation);
+            // 創建新對話
+            createNewConversation(creatorId, creatorName);
           }
         }
-
-        setConversations(mockConversations);
-        
-        // 載入選中對話的訊息
-        if (selectedConversation || (creatorId && creatorName)) {
-          const mockMessages = [
-            {
-              id: '1',
-              senderId: 'other',
-              senderName: creatorName || '設計師小王',
-              content: '您好！有什麼可以幫助您的嗎？',
-              timestamp: new Date(Date.now() - 3600000),
-              isRead: true
-            }
-          ];
-          setMessages(mockMessages);
-        }
-        
-      } catch (error) {
-        console.error('載入聊天記錄失敗:', error);
-      } finally {
-        setIsLoading(false);
+      } else if (creatorId && creatorName) {
+        // 如果沒有任何對話但有指定創作者，創建新對話
+        createNewConversation(creatorId, creatorName);
       }
+      setIsLoading(false);
+    }, (error) => {
+      console.error('載入對話列表失敗:', error);
+      setIsLoading(false);
+    });
+
+    conversationsRef.current = unsubscribe;
+  };
+
+  // 創建新對話
+  const createNewConversation = async (participantId, participantName) => {
+    if (!isRealUser) return;
+
+    const chatId = generateChatId(user.uid, participantId);
+    const conversationData = {
+      id: chatId,
+      participantId,
+      participantName,
+      participantAvatar: '/api/placeholder/40/40',
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0
     };
 
-    loadConversations();
-  }, [creatorId, creatorName, selectedConversation, isRealUser]);
+    // 為兩個用戶都添加對話記錄
+    const updates = {};
+    updates[`users/${user.uid}/conversations/${chatId}`] = conversationData;
+    updates[`users/${participantId}/conversations/${chatId}`] = {
+      ...conversationData,
+      participantId: user.uid,
+      participantName: user.displayName || user.email || '用戶',
+    };
 
+    try {
+      await set(ref(realtimeDb, `users/${user.uid}/conversations/${chatId}`), conversationData);
+      await set(ref(realtimeDb, `users/${participantId}/conversations/${chatId}`), {
+        ...conversationData,
+        participantId: user.uid,
+        participantName: user.displayName || user.email || '用戶',
+      });
+      setSelectedConversation(conversationData);
+    } catch (error) {
+      console.error('創建對話失敗:', error);
+    }
+  };
+
+  // 載入選中對話的訊息
+  const loadMessages = (conversationId) => {
+    if (!conversationId) return;
+
+    // 清除之前的監聽器
+    if (messagesRef.current) {
+      try {
+        off(messagesRef.current);
+      } catch (error) {
+        console.log('移除監聽器時發生錯誤:', error);
+      }
+      messagesRef.current = null;
+    }
+
+    const chatMessagesRef = ref(realtimeDb, `chats/${conversationId}/messages`);
+    const messagesQuery = query(chatMessagesRef, orderByChild('timestamp'), limitToLast(50));
+
+    const unsubscribe = onValue(messagesQuery, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const messagesList = Object.entries(data).map(([id, message]) => ({
+          id,
+          ...message,
+          timestamp: new Date(message.timestamp)
+        })).sort((a, b) => a.timestamp - b.timestamp);
+        
+        setMessages(messagesList);
+      } else {
+        setMessages([]);
+      }
+    }, (error) => {
+      console.error('載入訊息失敗:', error);
+      setMessages([]);
+    });
+
+    messagesRef.current = unsubscribe;
+  };
+
+  // 發送訊息
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation || !isRealUser) return;
 
-    const message = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      senderName: '我',
+    const messageData = {
+      senderId: user.uid,
+      senderName: user.displayName || user.email || '我',
       content: newMessage.trim(),
-      timestamp: new Date(),
+      timestamp: serverTimestamp(),
       isRead: false
     };
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
-
-    // 這裡將來會發送到真實的聊天服務
     try {
-      // await sendMessage(selectedConversation.id, message);
+      // 發送訊息到聊天室
+      const chatMessagesRef = ref(realtimeDb, `chats/${selectedConversation.id}/messages`);
+      await push(chatMessagesRef, messageData);
+
+      // 更新對話的最後訊息
+      const conversationUpdate = {
+        lastMessage: newMessage.trim(),
+        lastMessageTime: new Date().toISOString(),
+      };
+
+      // 更新發送者的對話記錄
+      await set(ref(realtimeDb, `users/${user.uid}/conversations/${selectedConversation.id}`), {
+        ...selectedConversation,
+        ...conversationUpdate
+      });
+
+      // 更新接收者的對話記錄（增加未讀數）
+      const receiverConvRef = ref(realtimeDb, `users/${selectedConversation.participantId}/conversations/${selectedConversation.id}`);
+      await set(receiverConvRef, {
+        ...selectedConversation,
+        participantId: user.uid,
+        participantName: user.displayName || user.email || '用戶',
+        lastMessage: newMessage.trim(),
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: (selectedConversation.unreadCount || 0) + 1
+      });
+
+      setNewMessage('');
     } catch (error) {
       console.error('發送訊息失敗:', error);
+      alert('發送訊息失敗，請稍後再試');
     }
   };
+
+  // 載入對話和設置監聽器
+  useEffect(() => {
+    if (!isRealUser) return;
+    
+    loadConversations();
+    
+    // 清理函數
+    return () => {
+      if (conversationsRef.current) {
+        try {
+          off(conversationsRef.current);
+        } catch (error) {
+          console.log('移除對話監聽器時發生錯誤:', error);
+        }
+        conversationsRef.current = null;
+      }
+      if (messagesRef.current) {
+        try {
+          off(messagesRef.current);
+        } catch (error) {
+          console.log('移除訊息監聽器時發生錯誤:', error);
+        }
+        messagesRef.current = null;
+      }
+    };
+  }, [isRealUser, creatorId, creatorName]);
+
+  // 當選中對話改變時載入訊息
+  useEffect(() => {
+    if (selectedConversation) {
+      loadMessages(selectedConversation.id);
+      
+      // 標記訊息為已讀
+      if (selectedConversation.unreadCount > 0) {
+        set(ref(realtimeDb, `users/${user.uid}/conversations/${selectedConversation.id}/unreadCount`), 0)
+          .catch(error => console.error('標記已讀失敗:', error));
+      }
+    }
+    
+    return () => {
+      if (messagesRef.current) {
+        try {
+          off(messagesRef.current);
+        } catch (error) {
+          console.log('移除訊息監聽器時發生錯誤:', error);
+        }
+        messagesRef.current = null;
+      }
+    };
+  }, [selectedConversation, user?.uid]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -135,7 +271,10 @@ const ChatPage = () => {
     }
   };
 
-  // 如果正在載入認證狀態，顯示載入畫面
+  // 處理對話選擇
+  const handleConversationSelect = (conversation) => {
+    setSelectedConversation(conversation);
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-cream-50 flex items-center justify-center">
@@ -206,7 +345,7 @@ const ChatPage = () => {
                   conversations.map((conversation) => (
                     <div
                       key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation)}
+                      onClick={() => handleConversationSelect(conversation)}
                       className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
                         selectedConversation?.id === conversation.id ? 'bg-green-50' : ''
                       }`}
@@ -266,12 +405,12 @@ const ChatPage = () => {
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.senderId === 'me' ? 'justify-end' : 'justify-start'
+                          message.senderId === user?.uid ? 'justify-end' : 'justify-start'
                         }`}
                       >
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.senderId === 'me'
+                            message.senderId === user?.uid
                               ? 'bg-green-500 text-white'
                               : 'bg-gray-200 text-gray-900'
                           }`}
@@ -279,17 +418,24 @@ const ChatPage = () => {
                           <p className="text-sm">{message.content}</p>
                           <p
                             className={`text-xs mt-1 ${
-                              message.senderId === 'me' ? 'text-green-100' : 'text-gray-500'
+                              message.senderId === user?.uid ? 'text-green-100' : 'text-gray-500'
                             }`}
                           >
-                            {message.timestamp.toLocaleTimeString('zh-TW', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            {message.timestamp instanceof Date 
+                              ? message.timestamp.toLocaleTimeString('zh-TW', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : new Date(message.timestamp).toLocaleTimeString('zh-TW', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                            }
                           </p>
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* 訊息輸入區 */}

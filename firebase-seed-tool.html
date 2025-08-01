@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 測試數據導入工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d5a27;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .user-list {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .user-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border-left: 4px solid #4CAF50;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase 測試數據導入工具</h1>
+        
+        <div class="status info">
+            <strong>說明：</strong>這個工具會在你的 Firebase Realtime Database 中創建測試用戶和專案數據，讓你可以測試私訊功能。
+        </div>
+        
+        <div>
+            <button id="importBtn" class="button" onclick="importTestData()">
+                <span id="btnText">導入測試數據</span>
+                <span id="loading" class="loading" style="display: none;"></span>
+            </button>
+            <button class="button" onclick="showTestUsers()" style="background-color: #17a2b8;">
+                顯示測試用戶列表
+            </button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="userList"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, push } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZmVR8uK8qkHlnJ8FU6BFRW4V-vxXSS6I",
+            authDomain: "catcher-26e1d.firebaseapp.com",
+            databaseURL: "https://catcher-26e1d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "catcher-26e1d",
+            storageBucket: "catcher-26e1d.firebasestorage.app",
+            messagingSenderId: "483645051805",
+            appId: "1:483645051805:web:571cfa24ef6ceba1601574",
+            measurementId: "G-5E3LM7QF00"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const realtimeDb = getDatabase(app);
+
+        // 測試用戶數據
+        const testUsers = [
+            {
+                uid: 'test_creator_001',
+                displayName: '小明創作者',
+                email: 'xiaoming@example.com',
+                bio: '專業攝影師，擅長風景攝影和人像攝影。',
+                avatar: 'https://picsum.photos/200?random=1',
+                userType: 'creator',
+                skills: ['攝影', '後製', '平面設計'],
+                location: '台北市',
+                rating: 4.8,
+                projectsCompleted: 25,
+                joinDate: '2024-01-15'
+            },
+            {
+                uid: 'test_creator_002', 
+                displayName: '小華設計師',
+                email: 'xiaohua@example.com',
+                bio: '資深UI/UX設計師，有5年設計經驗。',
+                avatar: 'https://picsum.photos/200?random=2',
+                userType: 'creator',
+                skills: ['UI設計', 'UX設計', 'Figma', 'Adobe Creative Suite'],
+                location: '新北市',
+                rating: 4.9,
+                projectsCompleted: 42,
+                joinDate: '2023-08-20'
+            },
+            {
+                uid: 'test_creator_003',
+                displayName: '美美插畫家',
+                email: 'meimei@example.com', 
+                bio: '自由插畫家，專精於數位插畫和角色設計。',
+                avatar: 'https://picsum.photos/200?random=3',
+                userType: 'creator',
+                skills: ['插畫', '角色設計', 'Procreate', 'Photoshop'],
+                location: '台中市',
+                rating: 4.7,
+                projectsCompleted: 18,
+                joinDate: '2024-03-10'
+            },
+            {
+                uid: 'test_creator_004',
+                displayName: '阿傑影片剪輯',
+                email: 'ajie@example.com',
+                bio: '影片剪輯專家，擅長各種風格的影片製作。',
+                avatar: 'https://picsum.photos/200?random=4', 
+                userType: 'creator',
+                skills: ['影片剪輯', 'After Effects', 'Premiere Pro', '動畫製作'],
+                location: '高雄市',
+                rating: 4.6,
+                projectsCompleted: 33,
+                joinDate: '2023-11-05'
+            },
+            {
+                uid: 'test_creator_005',
+                displayName: '文文文案師',
+                email: 'wenwen@example.com',
+                bio: '專業文案創作者，擅長行銷文案和品牌故事。',
+                avatar: 'https://picsum.photos/200?random=5',
+                userType: 'creator', 
+                skills: ['文案撰寫', '行銷企劃', '品牌策略', 'SEO'],
+                location: '台南市',
+                rating: 4.9,
+                projectsCompleted: 29,
+                joinDate: '2024-02-01'
+            },
+            {
+                uid: 'test_member_001',
+                displayName: '客戶小王',
+                email: 'xiaowang@example.com',
+                bio: '小型企業老闆，經常需要設計和行銷服務。',
+                avatar: 'https://picsum.photos/200?random=6',
+                userType: 'member',
+                company: '小王咖啡店',
+                location: '桃園市',
+                joinDate: '2024-04-12'
+            },
+            {
+                uid: 'test_member_002', 
+                displayName: '李小姐',
+                email: 'lixiaojie@example.com',
+                bio: '新創公司創辦人，需要各種創意服務支援。',
+                avatar: 'https://picsum.photos/200?random=7',
+                userType: 'member',
+                company: '創新科技有限公司',
+                location: '新竹市',
+                joinDate: '2024-01-30'
+            }
+        ];
+
+        // 測試專案數據
+        const testProjects = [
+            {
+                creatorId: 'test_creator_001',
+                title: '婚禮攝影作品集',
+                description: '浪漫唯美的婚禮攝影作品，捕捉每一個美好瞬間。',
+                category: '攝影',
+                images: [
+                    'https://picsum.photos/400/300?random=10',
+                    'https://picsum.photos/400/300?random=11',
+                    'https://picsum.photos/400/300?random=12'
+                ],
+                tags: ['婚禮攝影', '人像攝影', '戶外攝影'],
+                price: 15000,
+                duration: '1天',
+                likes: 45,
+                views: 230,
+                createdAt: '2024-06-15'
+            },
+            {
+                creatorId: 'test_creator_002',
+                title: '電商網站UI設計',
+                description: '現代化的電商網站介面設計，提升用戶體驗。',
+                category: '設計',
+                images: [
+                    'https://picsum.photos/400/300?random=13',
+                    'https://picsum.photos/400/300?random=14'
+                ],
+                tags: ['UI設計', '電商設計', '響應式設計'],
+                price: 25000,
+                duration: '2週',
+                likes: 62,
+                views: 180,
+                createdAt: '2024-07-02'
+            },
+            {
+                creatorId: 'test_creator_003',
+                title: '角色插畫設計',
+                description: '可愛風格的角色插畫，適用於各種媒體。',
+                category: '插畫',
+                images: [
+                    'https://picsum.photos/400/300?random=15',
+                    'https://picsum.photos/400/300?random=16'
+                ],
+                tags: ['角色設計', '插畫', '數位繪圖'],
+                price: 8000,
+                duration: '1週',
+                likes: 38,
+                views: 150,
+                createdAt: '2024-07-10'
+            }
+        ];
+
+        // 導入數據函數
+        window.importTestData = async function() {
+            const btn = document.getElementById('importBtn');
+            const btnText = document.getElementById('btnText');
+            const loading = document.getElementById('loading');
+            const statusDiv = document.getElementById('status');
+            
+            // 設置按鈕為載入狀態
+            btn.disabled = true;
+            btnText.textContent = '導入中...';
+            loading.style.display = 'inline-block';
+            
+            try {
+                statusDiv.innerHTML = '<div class="status info">開始導入測試數據...</div>';
+                
+                // 導入用戶數據
+                let successCount = 0;
+                for (const user of testUsers) {
+                    try {
+                        const userRef = ref(realtimeDb, `users/${user.uid}`);
+                        await set(userRef, user);
+                        successCount++;
+                        console.log(`✅ 導入用戶: ${user.displayName}`);
+                    } catch (error) {
+                        console.error(`❌ 導入用戶失敗: ${user.displayName}`, error);
+                    }
+                }
+                
+                // 導入專案數據
+                for (const project of testProjects) {
+                    try {
+                        const projectsRef = ref(realtimeDb, 'projects');
+                        await push(projectsRef, project);
+                        console.log(`✅ 導入專案: ${project.title}`);
+                    } catch (error) {
+                        console.error(`❌ 導入專案失敗: ${project.title}`, error);
+                    }
+                }
+                
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        <strong>✅ 導入完成！</strong><br>
+                        成功導入 ${successCount} 個用戶和 ${testProjects.length} 個專案。<br>
+                        現在你可以在私訊功能中搜尋這些創作者了！
+                    </div>
+                `;
+                
+                // 自動顯示用戶列表
+                showTestUsers();
+                
+            } catch (error) {
+                console.error('導入過程中發生錯誤:', error);
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ 導入失敗</strong><br>
+                        錯誤訊息: ${error.message}
+                    </div>
+                `;
+            } finally {
+                // 恢復按鈕狀態
+                btn.disabled = false;
+                btnText.textContent = '導入測試數據';
+                loading.style.display = 'none';
+            }
+        };
+
+        // 顯示測試用戶列表
+        window.showTestUsers = function() {
+            const userListDiv = document.getElementById('userList');
+            const creators = testUsers.filter(user => user.userType === 'creator');
+            
+            let html = '<div class="user-list"><h3>🎨 可私訊的創作者列表</h3>';
+            
+            creators.forEach(creator => {
+                html += `
+                    <div class="user-item">
+                        <strong>${creator.displayName}</strong> (${creator.location})<br>
+                        <small>專長: ${creator.skills.join(', ')} | 評分: ${creator.rating}/5.0 | 完成專案: ${creator.projectsCompleted}</small><br>
+                        <small>簡介: ${creator.bio}</small><br>
+                        <small>要私訊此創作者，請使用以下URL參數:</small><br>
+                        <code>/chat?creatorId=${creator.uid}&creatorName=${encodeURIComponent(creator.displayName)}</code>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            userListDiv.innerHTML = html;
+        };
+    </script>
+</body>
+</html>
