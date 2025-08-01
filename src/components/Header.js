@@ -260,11 +260,7 @@ const Header = () => {
         <div className="flex items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center mr-8">
-            <img 
-              src={process.env.PUBLIC_URL + "/logo.png"} 
-              alt="Catcher" 
-              className="h-12 w-auto"
-            />
+            <img src="/images/logo.png" alt="Catcher" className="h-12 w-auto" />
           </Link>
 
           {/* Navigation */}
