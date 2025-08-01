@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Catcher/static/css/main.9087f5eb.css",
+    "main.js": "/Catcher/static/js/main.368ac6f3.js",
+    "index.html": "/Catcher/index.html",
+    "main.9087f5eb.css.map": "/Catcher/static/css/main.9087f5eb.css.map",
+    "main.368ac6f3.js.map": "/Catcher/static/js/main.368ac6f3.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9087f5eb.css",
+    "static/js/main.368ac6f3.js"
+  ]
+}

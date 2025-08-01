@@ -12,6 +12,7 @@ import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import ChatPage from './components/ChatPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import './styles/mobile.css';
 
 // 首頁組件
 const HomePage = () => (

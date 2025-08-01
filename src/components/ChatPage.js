@@ -315,38 +315,38 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50">
-      <div className="max-w-6xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-cream-50 chat-mobile">
+      <div className="max-w-6xl mx-auto py-4 md:py-8 px-4">
         {/* 頁面標題 */}
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">私訊</h1>
+        <div className="mb-4 md:mb-6 flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">私訊</h1>
           <button
             onClick={() => navigate('/')}
-            className="text-green-600 hover:text-green-500"
+            className="text-green-600 hover:text-green-500 text-sm md:text-base"
           >
             返回首頁
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '600px' }}>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: 'calc(100vh - 180px)', minHeight: '500px' }}>
           <div className="flex h-full">
-            {/* 對話列表 */}
-            <div className="w-1/3 border-r border-gray-200 flex flex-col">
-              <div className="p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">對話</h2>
+            {/* 對話列表 - 手機版隱藏或抽屜式 */}
+            <div className={`${selectedConversation ? 'hidden md:block' : 'block'} w-full md:w-1/3 border-r border-gray-200 flex flex-col chat-sidebar-mobile`}>
+              <div className="p-3 md:p-4 border-b border-gray-200">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900">對話</h2>
               </div>
               
               <div className="flex-1 overflow-y-auto">
                 {conversations.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    <p>尚無對話記錄</p>
+                    <p className="text-sm md:text-base">尚無對話記錄</p>
                   </div>
                 ) : (
                   conversations.map((conversation) => (
                     <div
                       key={conversation.id}
                       onClick={() => handleConversationSelect(conversation)}
-                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                      className={`p-3 md:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 touch-feedback ${
                         selectedConversation?.id === conversation.id ? 'bg-green-50' : ''
                       }`}
                     >
@@ -354,23 +354,23 @@ const ChatPage = () => {
                         <img
                           src={conversation.participantAvatar}
                           alt={conversation.participantName}
-                          className="w-10 h-10 rounded-full mr-3"
+                          className="w-10 h-10 md:w-12 md:h-12 rounded-full mr-3 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm md:text-base font-medium text-gray-900 truncate">
                               {conversation.participantName}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 flex-shrink-0 ml-2">
                               {conversation.lastMessageTime}
                             </p>
                           </div>
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-xs md:text-sm text-gray-500 truncate">
                             {conversation.lastMessage}
                           </p>
                         </div>
                         {conversation.unreadCount > 0 && (
-                          <div className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          <div className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
                             {conversation.unreadCount}
                           </div>
                         )}
@@ -381,26 +381,34 @@ const ChatPage = () => {
               </div>
             </div>
 
-            {/* 聊天區域 */}
-            <div className="flex-1 flex flex-col">
+            {/* 聊天區域 - 手機版全屏 */}
+            <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 flex-col chat-main-mobile`}>
               {selectedConversation ? (
                 <>
-                  {/* 聊天標題 */}
-                  <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  {/* 聊天標題 - 手機版添加返回按鈕 */}
+                  <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center">
+                      <button
+                        onClick={() => setSelectedConversation(null)}
+                        className="md:hidden mr-3 p-1 text-gray-500 hover:text-gray-700"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
                       <img
                         src={selectedConversation.participantAvatar}
                         alt={selectedConversation.participantName}
-                        className="w-8 h-8 rounded-full mr-3"
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-full mr-3"
                       />
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-base md:text-lg font-medium text-gray-900">
                         {selectedConversation.participantName}
                       </h3>
                     </div>
                   </div>
 
-                  {/* 訊息列表 */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {/* 訊息列表 - 手機版優化 */}
+                  <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 chat-messages-mobile">
                     {messages.map((message) => (
                       <div
                         key={message.id}
@@ -409,17 +417,13 @@ const ChatPage = () => {
                         }`}
                       >
                         <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.senderId === user?.uid
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-200 text-gray-900'
+                          className={`message-bubble ${
+                            message.senderId === user?.uid ? 'sent' : 'received'
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm md:text-base">{message.content}</p>
                           <p
-                            className={`text-xs mt-1 ${
-                              message.senderId === user?.uid ? 'text-green-100' : 'text-gray-500'
-                            }`}
+                            className={`text-xs mt-1 opacity-75`}
                           >
                             {message.timestamp instanceof Date 
                               ? message.timestamp.toLocaleTimeString('zh-TW', {
@@ -438,21 +442,22 @@ const ChatPage = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* 訊息輸入區 */}
-                  <div className="p-4 border-t border-gray-200">
+                  {/* 訊息輸入區 - 手機版優化 */}
+                  <div className="chat-input-mobile p-3 md:p-4 border-t border-gray-200 bg-white">
                     <div className="flex space-x-2">
                       <textarea
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="輸入訊息..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="input-mobile flex-1 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         rows="1"
+                        style={{ fontSize: '16px' }} // 防止 iOS 縮放
                       />
                       <button
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
-                        className={`px-4 py-2 rounded-md font-medium ${
+                        className={`btn-mobile px-4 py-2 rounded-lg font-medium transition-colors ${
                           newMessage.trim()
                             ? 'bg-green-600 text-white hover:bg-green-700'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -464,10 +469,15 @@ const ChatPage = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center p-4">
                   <div className="text-center text-gray-500">
-                    <p className="text-lg mb-2">選擇一個對話開始聊天</p>
-                    <p className="text-sm">或點擊創作者頁面的「私訊創作者」按鈕開始新對話</p>
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <p className="text-base md:text-lg mb-2">選擇一個對話開始聊天</p>
+                    <p className="text-sm text-gray-400">或點擊創作者頁面的「私訊創作者」按鈕開始新對話</p>
                   </div>
                 </div>
               )}
