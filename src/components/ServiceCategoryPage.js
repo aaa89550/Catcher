@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { servicesData, categoryTags } from '../data/servicesData';
+import { getServicesByCategory, getAllServices } from '../firebase/firestore';
 
 const ServiceCategoryPage = () => {
   const { category } = useParams();
@@ -10,6 +10,10 @@ const ServiceCategoryPage = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false); // 手機版篩選器狀態
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false); // 改為 false，立即顯示頁面
+  const [error, setError] = useState(null);
+  const [availableTags, setAvailableTags] = useState([]);
 
   // 當 URL 參數改變時更新選中的分類
   useEffect(() => {
@@ -17,6 +21,48 @@ const ServiceCategoryPage = () => {
       setSelectedCategory(decodeURIComponent(category));
     }
   }, [category]);
+
+  // 獲取服務數據
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        setLoading(true); // 設置載入狀態，但不阻塞頁面
+        setError(null);
+        
+        let categoryServices = [];
+        if (selectedCategory === '全部') {
+          categoryServices = await getAllServices();
+        } else {
+          categoryServices = await getServicesByCategory(selectedCategory);
+        }
+        
+        // 只有在有數據時才更新，否則保持現有狀態
+        if (categoryServices && categoryServices.length > 0) {
+          setServices(categoryServices);
+          
+          // 提取可用標籤
+          const tags = new Set();
+          categoryServices.forEach(service => {
+            service.tags?.forEach(tag => tags.add(tag));
+          });
+          setAvailableTags(Array.from(tags));
+        } else {
+          // 如果沒有數據，設置空陣列但不顯示錯誤
+          setServices([]);
+          setAvailableTags([]);
+        }
+        
+      } catch (err) {
+        console.error('載入服務失敗:', err);
+        setError('載入服務失敗');
+        // 保持現有數據，不清空
+      } finally {
+        setLoading(false); // 完成載入
+      }
+    };
+
+    loadServices();
+  }, [selectedCategory]);
 
   // 服務分類
   const categories = [
@@ -43,9 +89,6 @@ const ServiceCategoryPage = () => {
     '教育培訓': 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=300&fit=crop',
     '翻譯服務': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&h=300&fit=crop'
   };
-
-  // 常用標籤 - 根據分類動態獲取
-  const availableTags = categoryTags[selectedCategory] || [];
 
   // 篩選器組件
   const FilterContent = ({ isMobile = false }) => (
@@ -225,9 +268,6 @@ const ServiceCategoryPage = () => {
     </div>
   );
 
-  // 獲取當前分類的服務數據
-  const services = servicesData[selectedCategory] || [];
-
   // 標籤選擇處理
   const handleTagToggle = (tag) => {
     if (selectedTags.includes(tag)) {
@@ -312,9 +352,14 @@ const ServiceCategoryPage = () => {
                   </svg>
                   篩選
                 </button>
-                <p className="text-primary-600 text-sm md:text-base">
-                  找到 {filteredServices.length} 個{selectedCategory}服務
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-primary-600 text-sm md:text-base">
+                    找到 {filteredServices.length} 個{selectedCategory}服務
+                  </p>
+                  {loading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                  )}
+                </div>
               </div>
               
               {/* 檢視模式切換 */}
@@ -504,8 +549,20 @@ const ServiceCategoryPage = () => {
                 <svg className="w-12 h-12 md:w-16 md:h-16 text-primary-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <h3 className="text-base md:text-lg font-medium text-primary-700 mb-2">找不到符合條件的服務</h3>
-                <p className="text-sm text-primary-500">請嘗試調整搜尋條件或篩選器</p>
+                <h3 className="text-base md:text-lg font-medium text-primary-700 mb-2">
+                  {error ? '載入服務時發生錯誤' : '找不到符合條件的服務'}
+                </h3>
+                <p className="text-sm text-primary-500 mb-4">
+                  {error ? error : '請嘗試調整搜尋條件或篩選器'}
+                </p>
+                {error && (
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    重新載入
+                  </button>
+                )}
               </div>
             )}
           </main>

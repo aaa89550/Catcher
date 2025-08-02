@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+// import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
@@ -21,11 +21,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app); // 僅瀏覽器端可用，Node.js 執行會出錯
 const db = getFirestore(app); // Firestore database
 const realtimeDb = getDatabase(app); // Realtime Database
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-export { db, realtimeDb, auth, analytics, storage };
+export { db, realtimeDb, auth, storage };
 export default app;

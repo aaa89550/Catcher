@@ -1,5 +1,74 @@
 /* 手機版增強樣式 */
 
+/* Header Logo 放大 */
+.h-15 {
+  height: 3.75rem; /* 15 * 0.25rem = 3.75rem (60px) */
+}
+
+/* Banner 輪播優化 */
+.banner-carousel {
+  touch-action: pan-x;
+  user-select: none;
+}
+
+.banner-carousel img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* 手機版隱藏左右控制按鈕 */
+@media (max-width: 768px) {
+  .banner-controls {
+    display: none;
+  }
+}
+
+/* Service categories mobile optimizations */
+.service-card-mobile {
+  min-height: 0;
+  height: auto;
+  touch-action: manipulation;
+}
+
+/* Square aspect ratio for service categories */
+.service-card-mobile.aspect-square {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 手機版服務分類優化 */
+@media (max-width: 768px) {
+  .service-card-mobile {
+    padding: 0.5rem !important;
+    max-width: 80px !important;
+  }
+  
+  .service-card-mobile h3 {
+    font-size: 0.65rem !important;
+    line-height: 1.1;
+  }
+
+  /* 搜尋標籤手機版優化 */
+  .search-tags-mobile {
+    gap: 0.25rem;
+    justify-content: center;
+  }
+  
+  .search-tags-mobile button {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* 搜尋結果頁面手機版 */
+  .search-filters-sticky {
+    top: 5rem; /* 配合新的 header 高度 */
+  }
+}
+
 /* 通用手機版改進 */
 @media (max-width: 768px) {
   /* 容器內距調整 */
@@ -376,7 +445,7 @@
 /* 橫向模式優化 */
 @media (max-width: 768px) and (orientation: landscape) {
   .chat-mobile {
-    height: calc(100vh - 3rem);
+    height: calc(100vh - 5rem);
   }
 
   .modal-content-mobile {
@@ -384,11 +453,11 @@
   }
 
   .header-mobile {
-    height: 3rem;
+    height: 5rem;
   }
 
   .header-mobile .logo {
-    height: 2rem;
+    height: 3rem;
   }
 }
 

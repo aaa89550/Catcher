@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getCategoryCounts } from '../firebase/firestore';
 
 const ServiceCategories = () => {
+  const [categoryCounts, setCategoryCounts] = useState({});
+  const [loading, setLoading] = useState(false); // 改為 false，讓組件立即顯示
+
   const categories = [
     {
       id: 1,
@@ -96,11 +100,28 @@ const ServiceCategories = () => {
     },
   ];
 
+  useEffect(() => {
+    const loadCategoryCounts = async () => {
+      try {
+        // 使用優化的函數一次性獲取所有分類數量
+        const counts = await getCategoryCounts();
+        setCategoryCounts(counts);
+      } catch (error) {
+        console.error('載入分類數據失敗:', error);
+        // 即使失敗也設置為不載入狀態，讓用戶可以看到分類
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategoryCounts();
+  }, []);
+
   return (
-    <section className="py-12 bg-cream-50">
+    <section className="py-6 md:py-8 bg-cream-50">
       <div className="container-sm">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-primary-800 mb-3">
+        <div className="text-center mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-primary-800 mb-2">
             服務類型
           </h2>
           <p className="text-primary-600 text-sm">
@@ -108,26 +129,31 @@ const ServiceCategories = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 md:gap-6 justify-items-center max-w-4xl mx-auto">
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 justify-items-center max-w-6xl mx-auto">
           {categories.map((category) => (
             <Link
               key={category.id}
               to={`/services/${encodeURIComponent(category.title)}`}
-              className="service-card-mobile group flex flex-col items-center text-center p-3 md:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 w-full max-w-[120px] md:max-w-none"
+              className="service-card-mobile group flex flex-col items-center justify-center text-center p-2 md:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 w-full aspect-square max-w-[80px] md:max-w-[140px]"
             >
-              <div className="text-primary-600 mb-2 group-hover:text-primary-700 transition-all duration-300 flex-shrink-0">
+              <div className="text-primary-600 mb-1 md:mb-2 group-hover:text-primary-700 transition-all duration-300 flex-shrink-0">
                 <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
                   {React.cloneElement(category.icon, {
-                    className: "w-5 h-5 md:w-8 md:h-8"
+                    className: "w-4 h-4 md:w-8 md:h-8"
                   })}
                 </div>
               </div>
-              <h3 className="text-xs md:text-sm font-medium text-gray-800 mb-1 leading-tight">
+              <h3 className="text-[10px] md:text-sm font-medium text-gray-800 mb-1 leading-tight">
                 {category.title}
               </h3>
-              <p className="text-[10px] md:text-xs text-gray-600 leading-tight hidden md:block">
+              <p className="text-[8px] md:text-xs text-gray-600 leading-tight hidden md:block">
                 {category.description}
               </p>
+              {!loading && (
+                <p className="text-[7px] md:text-[10px] text-primary-500 mt-1">
+                  {categoryCounts[category.title] || 0} 個服務
+                </p>
+              )}
             </Link>
           ))}
         </div>

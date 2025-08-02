@@ -280,14 +280,14 @@ const Header = () => {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
               <img 
                 src="/Catcher/logo.png" 
                 alt="Catcher" 
-                className="h-10 w-auto mr-2"
+                className="h-15 w-auto mr-2"
                 onError={(e) => {
                   e.target.src = "/Catcher/images/logo.png";
                   e.target.onerror = () => {
@@ -475,7 +475,7 @@ const Header = () => {
 
       {/* Mobile Profile Menu (for logged in users) */}
       {showProfileMenu && isRealUser && (
-        <div className="md:hidden absolute top-16 right-4 w-64 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
+        <div className="md:hidden absolute top-20 right-4 w-64 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
           <div className="px-4 py-3 border-b border-gray-200">
             <UserAvatar
               user={user}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import SearchSection from './components/SearchSection';
@@ -11,12 +11,16 @@ import CreatorPage from './components/CreatorPage';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import ChatPage from './components/ChatPage';
+import SearchResultsPage from './components/SearchResultsPage';
+import HeroBanner from './components/HeroBanner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { initializeServices, initializeCreators, initializeReviews } from './firebase/initData';
 import './styles/mobile.css';
 
 // 首頁組件
 const HomePage = () => (
   <main>
+    <HeroBanner />
     <SearchSection />
     <ServiceCategories />
     <FeaturedServices />
@@ -44,6 +48,7 @@ const AppContent = () => {
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/services/:category" element={<ServiceCategoryPage />} />
         <Route path="/services/:category/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/creator/:creatorId" element={<CreatorPage />} />
@@ -58,6 +63,38 @@ const AppContent = () => {
 
 function App() {
   const basename = process.env.NODE_ENV === 'production' ? '/Catcher' : '';
+  
+  // 初始化 Firebase 數據（僅在開發環境執行一次）
+  useEffect(() => {
+    const initFirebaseData = async () => {
+      // 檢查是否已經初始化過
+      const initialized = localStorage.getItem('firebase_data_initialized');
+      if (initialized) return;
+
+      try {
+        console.log('開始初始化 Firebase 數據...');
+        
+        await initializeServices();
+        console.log('✓ 服務數據初始化完成');
+        
+        await initializeCreators();
+        console.log('✓ 創作者數據初始化完成');
+        
+        await initializeReviews();
+        console.log('✓ 評價數據初始化完成');
+        
+        localStorage.setItem('firebase_data_initialized', 'true');
+        console.log('🎉 所有數據初始化完成！');
+      } catch (error) {
+        console.error('❌ 初始化失敗:', error);
+      }
+    };
+
+    // 只在開發環境初始化
+    if (process.env.NODE_ENV === 'development') {
+      initFirebaseData();
+    }
+  }, []);
   
   return (
     <AuthProvider>
