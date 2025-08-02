@@ -40,6 +40,43 @@ const ChatPage = () => {
     return [userId1, userId2].sort().join('_');
   };
 
+  // 創建新對話
+  const createNewConversation = useCallback(async (participantId, participantName) => {
+    if (!isRealUser) return;
+
+    const chatId = generateChatId(user.uid, participantId);
+    const conversationData = {
+      id: chatId,
+      participantId,
+      participantName,
+      participantAvatar: '/api/placeholder/40/40',
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0
+    };
+
+    // 為兩個用戶都添加對話記錄
+    const updates = {};
+    updates[`users/${user.uid}/conversations/${chatId}`] = conversationData;
+    updates[`users/${participantId}/conversations/${chatId}`] = {
+      ...conversationData,
+      participantId: user.uid,
+      participantName: user.displayName || user.email || '用戶',
+    };
+
+    try {
+      await set(ref(realtimeDb, `users/${user.uid}/conversations/${chatId}`), conversationData);
+      await set(ref(realtimeDb, `users/${participantId}/conversations/${chatId}`), {
+        ...conversationData,
+        participantId: user.uid,
+        participantName: user.displayName || user.email || '用戶',
+      });
+      setSelectedConversation(conversationData);
+    } catch (error) {
+      console.error('創建對話失敗:', error);
+    }
+  }, [isRealUser, user.uid, user.displayName, user.email]);
+
   // 滾動到最新訊息
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,43 +127,6 @@ const ChatPage = () => {
 
     conversationsRef.current = unsubscribe;
   }, [isRealUser, user.uid, creatorId, creatorName, createNewConversation]);
-
-  // 創建新對話
-  const createNewConversation = useCallback(async (participantId, participantName) => {
-    if (!isRealUser) return;
-
-    const chatId = generateChatId(user.uid, participantId);
-    const conversationData = {
-      id: chatId,
-      participantId,
-      participantName,
-      participantAvatar: '/api/placeholder/40/40',
-      lastMessage: '',
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0
-    };
-
-    // 為兩個用戶都添加對話記錄
-    const updates = {};
-    updates[`users/${user.uid}/conversations/${chatId}`] = conversationData;
-    updates[`users/${participantId}/conversations/${chatId}`] = {
-      ...conversationData,
-      participantId: user.uid,
-      participantName: user.displayName || user.email || '用戶',
-    };
-
-    try {
-      await set(ref(realtimeDb, `users/${user.uid}/conversations/${chatId}`), conversationData);
-      await set(ref(realtimeDb, `users/${participantId}/conversations/${chatId}`), {
-        ...conversationData,
-        participantId: user.uid,
-        participantName: user.displayName || user.email || '用戶',
-      });
-      setSelectedConversation(conversationData);
-    } catch (error) {
-      console.error('創建對話失敗:', error);
-    }
-  }, [isRealUser, user.uid, user.displayName, user.email]);
 
   // 載入選中對話的訊息
   const loadMessages = (conversationId) => {
