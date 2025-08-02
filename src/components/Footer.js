@@ -34,18 +34,18 @@ const Footer = () => {
           <div>
             <h4 className="text-base font-semibold mb-3">關注我們</h4>
             <div className="space-y-1">
-              <a href="#" className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
+              <button className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
                 📘 Facebook
-              </a>
-              <a href="#" className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
+              </button>
+              <button className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
                 📷 Instagram  
-              </a>
-              <a href="#" className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
+              </button>
+              <button className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
                 💼 LinkedIn
-              </a>
-              <a href="#" className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
+              </button>
+              <button className="flex items-center text-primary-200 hover:text-white transition-colors text-sm">
                 🐦 Twitter
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -57,9 +57,9 @@ const Footer = () => {
             © 2025 筆墨紙硯工作室 版權所有
           </div>
           <div className="flex space-x-4 text-xs text-primary-300 mt-2 md:mt-0">
-            <a href="#" className="hover:text-white transition-colors">隱私政策</a>
-            <a href="#" className="hover:text-white transition-colors">服務條款</a>
-            <a href="#" className="hover:text-white transition-colors">聯絡我們</a>
+            <button className="hover:text-white transition-colors">隱私政策</button>
+            <button className="hover:text-white transition-colors">服務條款</button>
+            <button className="hover:text-white transition-colors">聯絡我們</button>
           </div>
         </div>
       </div>

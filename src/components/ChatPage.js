@@ -238,7 +238,7 @@ const ChatPage = () => {
         messagesRef.current = null;
       }
     };
-  }, [isRealUser, creatorId, creatorName]);
+  }, [isRealUser, creatorId, creatorName, loadConversations]);
 
   // 當選中對話改變時載入訊息
   useEffect(() => {

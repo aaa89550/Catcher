@@ -3,34 +3,6 @@ import { Link } from 'react-router-dom';
 import { ref, onValue } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
 
-// 預設精選服務數據（作為後備）
-const defaultServices = [
-  {
-    id: 'default-1',
-    title: '專業網頁設計服務',
-    description: '提供響應式網頁設計，包含 UI/UX 設計',
-    price: 25000,
-    rating: 4.8,
-    reviewCount: 24,
-    creatorName: '設計師小王',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    images: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop'],
-    category: '網頁設計'
-  },
-  {
-    id: 'default-2',
-    title: '品牌Logo設計',
-    description: '專業品牌識別設計，包含Logo、名片設計',
-    price: 8000,
-    rating: 4.9,
-    reviewCount: 32,
-    creatorName: '創意工作室',
-    creatorAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b632?w=150&h=150&fit=crop&crop=face',
-    images: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop'],
-    category: '平面設計'
-  }
-];
-
 const FeaturedServices = () => {
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);

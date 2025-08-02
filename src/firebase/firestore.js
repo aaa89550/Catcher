@@ -5,7 +5,6 @@ import {
   getDoc, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
   query, 
   where, 
   orderBy, 
@@ -40,6 +39,9 @@ export const getServices = async (filters = {}) => {
           break;
         case 'high':
           q = query(q, where('price', '>=', 20000));
+          break;
+        default:
+          // 不添加價格篩選
           break;
       }
     }
@@ -386,6 +388,9 @@ export const searchServices = async (searchTerm, selectedTags = [], filters = {}
           break;
         case 'high':
           q = query(q, where('price', '>=', 20000));
+          break;
+        default:
+          // 不添加價格篩選
           break;
       }
     }

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from 'firebase/auth';
-import { auth, db, realtimeDb } from '../firebase/config';
+import { auth, db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 // 漢堡選單圖標組件
@@ -434,25 +434,61 @@ const Header = () => {
                 關於我們
               </Link>
               
-              {/* Mobile Auth Section - 僅顯示登入/註冊按鈕給未登入用戶 */}
-              {!isRealUser && (
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <Link
-                    to="/login"
-                    className="block px-3 py-2 text-base font-medium text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded-md transition-colors"
-                    onClick={closeMobileMenu}
-                  >
-                    登入
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="block px-3 py-2 text-base font-medium bg-primary-600 text-white hover:bg-primary-700 rounded-md transition-colors text-center"
-                    onClick={closeMobileMenu}
-                  >
-                    免費註冊
-                  </Link>
-                </div>
-              )}
+              {/* Mobile Auth Section */}
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                {isRealUser ? (
+                  <>
+                    <div className="px-3 py-2">
+                      <div className="flex items-center space-x-3">
+                        <UserAvatar
+                          user={user}
+                          userProfile={userProfile}
+                          className="w-10 h-10"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowProfileModal(true);
+                        closeMobileMenu();
+                      }}
+                      className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      編輯個人資料
+                    </button>
+                    <Link
+                      to="/chat"
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      私訊聊天
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                      登出
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="block px-3 py-2 text-base font-medium text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded-md transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      登入
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="block px-3 py-2 text-base font-medium bg-primary-600 text-white hover:bg-primary-700 rounded-md transition-colors text-center"
+                      onClick={closeMobileMenu}
+                    >
+                      免費註冊
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
