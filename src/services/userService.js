@@ -1,5 +1,5 @@
 import { collection, addDoc, doc, getDoc, setDoc, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../firebase/config'; // 重新啟用 Firestore
 
 // 創建用戶檔案
 export const createUserProfile = async (userData) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { servicesData } from '../data/servicesData';
+import { ref, onValue } from 'firebase/database';
+import { realtimeDb } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 
 const ServiceDetailPage = () => {
@@ -11,25 +12,29 @@ const ServiceDetailPage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
-    const categoryData = servicesData[decodeURIComponent(category)];
-    if (categoryData) {
-      const serviceData = categoryData.find(s => s.id === parseInt(serviceId));
-      if (serviceData) {
-        // 如果服務已經有媒體數據，直接使用；否則添加預設媒體
+    if (!serviceId) return;
+
+    const serviceRef = ref(realtimeDb, `services/${serviceId}`);
+    
+    const unsubscribe = onValue(serviceRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // 增強服務數據，添加預設媒體和詳細描述
         const enhancedService = {
-          ...serviceData,
-          media: serviceData.media || [
+          id: serviceId,
+          ...data,
+          media: data.media || [
             {
               type: 'image',
-              url: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop',
-              thumbnail: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=150&h=100&fit=crop',
+              url: data.images?.[0] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop',
+              thumbnail: data.images?.[0] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=150&h=100&fit=crop',
               alt: '服務展示圖片',
               link: null
             }
           ],
-          detailedDescription: serviceData.detailedDescription || `
+          detailedDescription: data.detailedDescription || `
             <h3>服務說明：</h3>
-            <p>${serviceData.description}</p>
+            <p>${data.description}</p>
             
             <h3>服務內容：</h3>
             <ul>
@@ -38,24 +43,41 @@ const ServiceDetailPage = () => {
               <li>完整售後服務</li>
             </ul>
           `,
-          seller: serviceData.seller && typeof serviceData.seller === 'object' 
-            ? serviceData.seller 
+          seller: data.seller && typeof data.seller === 'object' 
+            ? {
+                ...data.seller,
+                skills: data.seller.skills || ['專業服務'],
+                bio: data.seller.bio || '專業的服務提供者，致力於為客戶提供最優質的服務。',
+                name: data.seller.name || data.creatorName || '專業服務者',
+                avatar: data.seller.avatar || data.creatorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+                rating: data.seller.rating || data.rating || 4.5,
+                reviews: data.seller.reviews || data.reviewCount || 0,
+                responseTime: data.seller.responseTime || '2小時內',
+                completedProjects: data.seller.completedProjects || Math.floor(Math.random() * 100) + 50,
+                memberSince: data.seller.memberSince || '2021年',
+                verified: data.seller.verified || true
+              }
             : {
-                name: serviceData.seller || '專業服務者',
-                avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
-                rating: serviceData.rating,
-                reviews: serviceData.reviews,
+                name: data.creatorName || '專業服務者',
+                avatar: data.creatorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+                rating: data.rating || 4.5,
+                reviews: data.reviewCount || 0,
                 responseTime: '2小時內',
                 completedProjects: Math.floor(Math.random() * 100) + 50,
                 memberSince: '2021年',
-                skills: serviceData.tags || [],
-                bio: '專業服務提供者，致力於為客戶提供高品質的服務。'
+                verified: true,
+                skills: ['專業服務'],
+                bio: '專業的服務提供者，致力於為客戶提供最優質的服務。'
               }
         };
         setService(enhancedService);
+      } else {
+        setService(null);
       }
-    }
-  }, [category, serviceId]);
+    });
+
+    return () => unsubscribe();
+  }, [serviceId]);
 
   if (!service) {
     return (
@@ -68,7 +90,7 @@ const ServiceDetailPage = () => {
     );
   }
 
-  const selectedMedia = service.media[selectedImageIndex];
+  const selectedMedia = (service.media || [])[selectedImageIndex] || {};
 
   const handleMediaClick = (link) => {
     if (link) {
@@ -139,7 +161,7 @@ const ServiceDetailPage = () => {
 
             {/* 縮圖選擇器 */}
             <div className="flex space-x-2 overflow-x-auto pb-2">
-              {service.media.map((media, index) => (
+              {(service.media || []).map((media, index) => (
                 <div key={index} className="relative flex-shrink-0">
                   <img
                     src={media.thumbnail}
@@ -173,7 +195,7 @@ const ServiceDetailPage = () => {
 
               {/* 標籤 */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {service.tags.map((tag, index) => (
+                {(service.tags || []).map((tag, index) => (
                   <span 
                     key={index}
                     className="px-3 py-1 bg-accent-100 text-accent-700 rounded-full text-sm"
@@ -209,10 +231,10 @@ const ServiceDetailPage = () => {
               {/* 價格 */}
               <div className="mb-6">
                 <div className="text-3xl font-bold text-accent-600 mb-2">
-                  NT$ {service.price.toLocaleString()}
+                  NT$ {(service.price || 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-primary-500">
-                  預計完成時間：{service.deliveryTime}
+                  預計完成時間：{service.deliveryTime || service.deliveryDays ? `${service.deliveryDays}天` : '詳洽'}
                 </div>
               </div>
 
@@ -288,41 +310,52 @@ const ServiceDetailPage = () => {
               {/* 統計資訊 */}
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div className="text-center p-3 bg-cream-50 rounded-lg">
-                  <div className="font-semibold text-primary-800">{service.seller.completedProjects}</div>
+                  <div className="font-semibold text-primary-800">
+                    {service.seller.completedProjects || '無'}
+                  </div>
                   <div className="text-primary-600">完成項目</div>
                 </div>
                 <div className="text-center p-3 bg-cream-50 rounded-lg">
-                  <div className="font-semibold text-primary-800">{service.seller.responseTime}</div>
+                  <div className="font-semibold text-primary-800">
+                    {service.seller.responseTime || '無'}
+                  </div>
                   <div className="text-primary-600">回應時間</div>
                 </div>
               </div>
 
               {/* 技能標籤 */}
-              <div className="mb-4">
-                <h5 className="text-sm font-semibold text-primary-700 mb-2">專業技能</h5>
-                <div className="flex flex-wrap gap-2">
-                  {service.seller.skills.map((skill, index) => (
-                    <span 
-                      key={index}
-                      className="px-2 py-1 bg-primary-100 text-primary-700 rounded text-xs"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+              {(service.seller?.skills || []).length > 0 ? (
+                <div className="mb-4">
+                  <h5 className="text-sm font-semibold text-primary-700 mb-2">專業技能</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {service.seller.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="px-2 py-1 bg-primary-100 text-primary-700 rounded text-xs"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mb-4">
+                  <h5 className="text-sm font-semibold text-primary-700 mb-2">專業技能</h5>
+                  <div className="text-sm text-gray-500">無</div>
+                </div>
+              )}
 
               {/* 簡介 */}
               <div className="mb-4">
                 <h5 className="text-sm font-semibold text-primary-700 mb-2">創作者簡介</h5>
                 <p className="text-sm text-primary-600 leading-relaxed">
-                  {service.seller.bio}
+                  {service.seller.bio || '無'}
                 </p>
               </div>
 
               {/* 加入時間 */}
               <div className="text-xs text-primary-500 mb-4">
-                加入時間：{service.seller.memberSince}
+                加入時間：{service.seller.memberSince || '無'}
               </div>
 
               {/* 查看完整檔案按鈕 */}

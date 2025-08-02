@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from 'firebase/auth';
-import { auth, db } from '../firebase/config';
+import { auth, db, realtimeDb } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 // 漢堡選單圖標組件
@@ -207,19 +207,32 @@ const Header = () => {
     const fetchUserProfile = async () => {
       if (isRealUser && user.uid) {
         try {
+          console.log('🔍 Header: 獲取用戶資料 from Firestore');
+          
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
+            console.log('✅ Header: Firestore 用戶資料獲取成功');
             setUserProfile(userDoc.data());
           } else {
+            console.log('📝 Header: 創建新的用戶基本資料');
             // 如果沒有用戶資料，創建基本資料
-            setUserProfile({
+            const basicProfile = {
               nickname: user.displayName || user.email?.split('@')[0] || '用戶',
               email: user.email,
               avatar: user.photoURL || '',
               bio: ''
-            });
+            };
+            setUserProfile(basicProfile);
           }
         } catch (error) {
+          console.error('❌ Header: Firestore 用戶資料獲取錯誤:', error);
+          // 發生錯誤時使用基本資料
+          setUserProfile({
+            nickname: user.displayName || user.email?.split('@')[0] || '用戶',
+            email: user.email,
+            avatar: user.photoURL || '',
+            bio: ''
+          });
           console.error('獲取用戶資料失敗:', error);
           // 設置基本資料作為後備
           setUserProfile({
@@ -338,6 +351,13 @@ const Header = () => {
                       編輯個人資料
                     </button>
                     <Link
+                      to="/upload-service"
+                      className="block px-4 py-2 text-sm text-primary-600 hover:bg-gray-100 transition-colors"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      上架服務
+                    </Link>
+                    <Link
                       to="/chat"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setShowProfileMenu(false)}
@@ -398,6 +418,7 @@ const Header = () => {
               >
                 尋找創作者
               </Link>
+              
               <Link
                 to="/become-creator"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
@@ -492,6 +513,13 @@ const Header = () => {
           >
             編輯個人資料
           </button>
+          <Link
+            to="/upload-service"
+            className="block px-4 py-2 text-sm text-primary-600 hover:bg-gray-100 transition-colors"
+            onClick={() => setShowProfileMenu(false)}
+          >
+            上架服務
+          </Link>
           <Link
             to="/chat"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"

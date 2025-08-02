@@ -12,7 +12,7 @@ import {
   limit,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from './config';
+import { db } from './config'; // 重新啟用 Firestore
 
 // ===== 服務相關 =====
 

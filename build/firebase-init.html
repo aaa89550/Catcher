@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 數據初始化工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+            background: #eff6ff;
+        }
+        .success {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+            color: #065f46;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .progress {
+            background: #f3f4f6;
+            border-radius: 6px;
+            height: 8px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            background: #3b82f6;
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase 數據初始化工具</h1>
+        <p>此工具將初始化您的 Firebase Firestore 數據庫，包含範例服務和創作者資料。</p>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+        
+        <button onclick="initializeData()" id="initBtn">開始初始化數據</button>
+        <button onclick="clearData()" id="clearBtn">清除所有數據</button>
+        
+        <div id="status" class="status" style="display: none;">
+            準備就緒...
+        </div>
+        
+        <div id="log" style="margin-top: 20px; font-family: monospace; background: #1f2937; color: #e5e7eb; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto; display: none;">
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            deleteDoc,
+            getDocs,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZmVR8uK8qkHlnJ8FU6BFRW4V-vxXSS6I",
+            authDomain: "catcher-26e1d.firebaseapp.com",
+            projectId: "catcher-26e1d",
+            storageBucket: "catcher-26e1d.firebasestorage.app",
+            messagingSenderId: "483645051805",
+            appId: "1:483645051805:web:571cfa24ef6ceba1601574"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function updateProgress(percent) {
+            document.getElementById('progressBar').style.width = percent + '%';
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'block';
+            statusEl.textContent = message;
+            statusEl.className = 'status';
+            if (type === 'success') statusEl.classList.add('success');
+            if (type === 'error') statusEl.classList.add('error');
+        }
+
+        function log(message) {
+            const logEl = document.getElementById('log');
+            logEl.style.display = 'block';
+            logEl.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // 範例服務數據（減少到3個）
+        const sampleServices = [
+            {
+                title: '專業網頁設計服務',
+                description: '提供響應式網頁設計，包含 UI/UX 設計和前端開發。專業團隊為您打造現代化、用戶友好的網站。',
+                category: '網頁設計',
+                price: 25000,
+                currency: 'TWD',
+                creatorId: 'creator1',
+                creatorName: '設計師小王',
+                creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                tags: ['設計', 'UI/UX', '開發'],
+                images: [
+                    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop'
+                ],
+                rating: 4.8,
+                reviewCount: 24,
+                featured: true,
+                deliveryDays: 14,
+                revisions: 3,
+                status: 'active',
+                createdAt: serverTimestamp()
+            },
+            {
+                title: '品牌Logo設計',
+                description: '專業品牌識別設計，包含Logo、名片、企業形象設計。獨特創意，展現品牌價值。',
+                category: '平面設計',
+                price: 8000,
+                currency: 'TWD',
+                creatorId: 'creator2',
+                creatorName: '創意工作室',
+                creatorAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b632?w=150&h=150&fit=crop&crop=face',
+                tags: ['設計', '品牌', '插畫'],
+                images: [
+                    'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=800&h=600&fit=crop'
+                ],
+                rating: 4.9,
+                reviewCount: 32,
+                featured: true,
+                deliveryDays: 7,
+                revisions: 5,
+                status: 'active',
+                createdAt: serverTimestamp()
+            },
+            {
+                title: '社群媒體行銷策略',
+                description: '提供完整的社群媒體行銷方案，包含內容策劃、廣告投放、數據分析等服務。',
+                category: '數位行銷',
+                price: 15000,
+                currency: 'TWD',
+                creatorId: 'creator3',
+                creatorName: '行銷達人',
+                creatorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                tags: ['行銷', '社群媒體', 'SEO'],
+                images: [
+                    'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop'
+                ],
+                rating: 4.6,
+                reviewCount: 18,
+                featured: true,
+                deliveryDays: 21,
+                revisions: 2,
+                status: 'active',
+                createdAt: serverTimestamp()
+            }
+        ];
+
+        // 全域函數
+        window.initializeData = async function() {
+            const initBtn = document.getElementById('initBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            initBtn.disabled = true;
+            clearBtn.disabled = true;
+            
+            try {
+                showStatus('開始初始化數據...', 'info');
+                log('開始 Firebase 數據初始化程序');
+                updateProgress(10);
+
+                // 初始化服務
+                log('正在添加範例服務...');
+                for (let i = 0; i < sampleServices.length; i++) {
+                    const service = sampleServices[i];
+                    await addDoc(collection(db, 'services'), service);
+                    log(`✓ 已添加服務: ${service.title}`);
+                    updateProgress(20 + (i / sampleServices.length) * 60);
+                }
+
+                // 初始化創作者
+                log('正在添加創作者資料...');
+                const creators = [
+                    {
+                        id: 'creator1',
+                        name: '設計師小王',
+                        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                        bio: '擁有8年網頁設計經驗的專業設計師',
+                        specialties: ['UI/UX設計', '前端開發', '響應式設計'],
+                        rating: 4.8,
+                        completedOrders: 156,
+                        memberSince: new Date('2019-03-15'),
+                        verified: true,
+                        createdAt: serverTimestamp()
+                    },
+                    {
+                        id: 'creator2',
+                        name: '創意工作室',
+                        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b632?w=150&h=150&fit=crop&crop=face',
+                        bio: '專精品牌設計的創意團隊',
+                        specialties: ['品牌設計', 'Logo設計', '平面設計'],
+                        rating: 4.9,
+                        completedOrders: 89,
+                        memberSince: new Date('2020-01-10'),
+                        verified: true,
+                        createdAt: serverTimestamp()
+                    },
+                    {
+                        id: 'creator3',
+                        name: '行銷達人',
+                        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                        bio: '數位行銷專家，擅長社群媒體經營和廣告投放策略',
+                        specialties: ['數位行銷', '社群媒體', 'SEO'],
+                        rating: 4.6,
+                        completedOrders: 72,
+                        memberSince: new Date('2020-01-10'),
+                        verified: true,
+                        createdAt: serverTimestamp()
+                    }
+                ];
+
+                for (let creator of creators) {
+                    await addDoc(collection(db, 'creators'), creator);
+                    log(`✓ 已添加創作者: ${creator.name}`);
+                }
+
+                updateProgress(100);
+                showStatus('✅ 數據初始化完成！', 'success');
+                log('🎉 所有數據初始化完成');
+                
+            } catch (error) {
+                console.error('初始化錯誤:', error);
+                showStatus('❌ 初始化失敗: ' + error.message, 'error');
+                log('❌ 錯誤: ' + error.message);
+            } finally {
+                initBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        };
+
+        window.clearData = async function() {
+            if (!confirm('確定要清除所有數據嗎？此操作無法撤銷。')) {
+                return;
+            }
+
+            const initBtn = document.getElementById('initBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            initBtn.disabled = true;
+            clearBtn.disabled = true;
+            
+            try {
+                showStatus('正在清除數據...', 'info');
+                log('開始清除所有數據');
+                updateProgress(20);
+
+                // 清除服務
+                const servicesSnapshot = await getDocs(collection(db, 'services'));
+                for (let doc of servicesSnapshot.docs) {
+                    await deleteDoc(doc.ref);
+                }
+                log('✓ 已清除所有服務');
+                updateProgress(60);
+
+                // 清除創作者
+                const creatorsSnapshot = await getDocs(collection(db, 'creators'));
+                for (let doc of creatorsSnapshot.docs) {
+                    await deleteDoc(doc.ref);
+                }
+                log('✓ 已清除所有創作者');
+                updateProgress(100);
+
+                showStatus('✅ 數據清除完成！', 'success');
+                log('🗑️ 所有數據已清除');
+                
+            } catch (error) {
+                console.error('清除錯誤:', error);
+                showStatus('❌ 清除失敗: ' + error.message, 'error');
+                log('❌ 錯誤: ' + error.message);
+            } finally {
+                initBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

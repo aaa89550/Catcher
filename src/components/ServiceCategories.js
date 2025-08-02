@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { getCategoryCounts } from '../firebase/firestore';
 
 const ServiceCategories = () => {
-  const [categoryCounts, setCategoryCounts] = useState({});
-  const [loading, setLoading] = useState(false); // 改為 false，讓組件立即顯示
 
   const categories = [
     {
@@ -100,23 +97,6 @@ const ServiceCategories = () => {
     },
   ];
 
-  useEffect(() => {
-    const loadCategoryCounts = async () => {
-      try {
-        // 使用優化的函數一次性獲取所有分類數量
-        const counts = await getCategoryCounts();
-        setCategoryCounts(counts);
-      } catch (error) {
-        console.error('載入分類數據失敗:', error);
-        // 即使失敗也設置為不載入狀態，讓用戶可以看到分類
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategoryCounts();
-  }, []);
-
   return (
     <section className="py-6 md:py-8 bg-cream-50">
       <div className="container-sm">
@@ -149,11 +129,6 @@ const ServiceCategories = () => {
               <p className="text-[8px] md:text-xs text-gray-600 leading-tight hidden md:block">
                 {category.description}
               </p>
-              {!loading && (
-                <p className="text-[7px] md:text-[10px] text-primary-500 mt-1">
-                  {categoryCounts[category.title] || 0} 個服務
-                </p>
-              )}
             </Link>
           ))}
         </div>

@@ -3,7 +3,7 @@ import {
   addDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from './config.js';
+import { db } from './config.js'; // 重新啟用 Firestore 導入
 
 // 初始化服務數據
 export const initializeServices = async () => {

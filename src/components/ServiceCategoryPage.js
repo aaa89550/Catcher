@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getServicesByCategory, getAllServices } from '../firebase/firestore';
+import { getServicesByCategory, getAllServices, subscribeToServicesByCategory } from '../firebase/realtimeServices';
 
 const ServiceCategoryPage = () => {
   const { category } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState(decodeURIComponent(category || '平面設計'));
+  // 添加防護措施，確保分類名稱有效
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    try {
+      const decoded = decodeURIComponent(category || '平面設計');
+      console.log(`🔍 ServiceCategoryPage: 解析分類 ${decoded}`);
+      return decoded;
+    } catch (error) {
+      console.error('❌ ServiceCategoryPage: 分類名稱解析失敗:', error);
+      return '平面設計'; // 默認分類
+    }
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState([0, 200000]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -18,17 +28,30 @@ const ServiceCategoryPage = () => {
   // 當 URL 參數改變時更新選中的分類
   useEffect(() => {
     if (category) {
-      setSelectedCategory(decodeURIComponent(category));
+      try {
+        const decoded = decodeURIComponent(category);
+        console.log(`🔄 ServiceCategoryPage: URL 分類變更為 ${decoded}`);
+        setSelectedCategory(decoded);
+      } catch (error) {
+        console.error('❌ ServiceCategoryPage: URL 分類解析失敗:', error);
+        setSelectedCategory('平面設計'); // 使用默認分類
+      }
     }
   }, [category]);
 
-  // 獲取服務數據
+  // 獲取服務數據 - 使用實時監聽，帶降級方案
   useEffect(() => {
-    const loadServices = async () => {
+    console.log(`🔄 ServiceCategoryPage: 開始監聽分類 ${selectedCategory}`);
+    setLoading(true);
+    setError(null);
+    
+    let unsubscribe = null;
+    let fallbackTimeout = null;
+    
+    // 降級方案：如果實時監聽失敗，使用一次性獲取
+    const fallbackLoad = async () => {
       try {
-        setLoading(true); // 設置載入狀態，但不阻塞頁面
-        setError(null);
-        
+        console.log(`🔄 ServiceCategoryPage: 使用降級方案獲取 ${selectedCategory}`);
         let categoryServices = [];
         if (selectedCategory === '全部') {
           categoryServices = await getAllServices();
@@ -36,32 +59,87 @@ const ServiceCategoryPage = () => {
           categoryServices = await getServicesByCategory(selectedCategory);
         }
         
-        // 只有在有數據時才更新，否則保持現有狀態
-        if (categoryServices && categoryServices.length > 0) {
-          setServices(categoryServices);
+        setServices(categoryServices || []);
+        
+        // 提取可用標籤
+        const tags = new Set();
+        if (Array.isArray(categoryServices)) {
+          categoryServices.forEach(service => {
+            if (service.tags && Array.isArray(service.tags)) {
+              service.tags.forEach(tag => tags.add(tag));
+            }
+          });
+        }
+        setAvailableTags(Array.from(tags));
+        setLoading(false);
+        setError(null);
+      } catch (fallbackError) {
+        console.error('❌ ServiceCategoryPage: 降級方案也失敗:', fallbackError);
+        setServices([]);
+        setAvailableTags([]);
+        setLoading(false);
+        setError('無法載入服務數據');
+      }
+    };
+    
+    try {
+      // 設置5秒超時，如果實時監聽沒有回應就使用降級方案
+      fallbackTimeout = setTimeout(() => {
+        console.log(`⏰ ServiceCategoryPage: 實時監聽超時，使用降級方案`);
+        fallbackLoad();
+      }, 5000);
+      
+      // 使用實時監聽來獲取服務
+      unsubscribe = subscribeToServicesByCategory(selectedCategory, (categoryServices) => {
+        try {
+          // 清除降級方案超時
+          if (fallbackTimeout) {
+            clearTimeout(fallbackTimeout);
+            fallbackTimeout = null;
+          }
+          
+          console.log(`📦 ServiceCategoryPage: 收到 ${categoryServices.length} 個 ${selectedCategory} 服務`);
+          
+          setServices(categoryServices || []);
           
           // 提取可用標籤
           const tags = new Set();
-          categoryServices.forEach(service => {
-            service.tags?.forEach(tag => tags.add(tag));
-          });
+          if (Array.isArray(categoryServices)) {
+            categoryServices.forEach(service => {
+              if (service.tags && Array.isArray(service.tags)) {
+                service.tags.forEach(tag => tags.add(tag));
+              }
+            });
+          }
           setAvailableTags(Array.from(tags));
-        } else {
-          // 如果沒有數據，設置空陣列但不顯示錯誤
-          setServices([]);
-          setAvailableTags([]);
+          setLoading(false);
+          setError(null);
+        } catch (callbackError) {
+          console.error('❌ ServiceCategoryPage: 處理服務數據時出錯:', callbackError);
+          // 實時監聽失敗，使用降級方案
+          fallbackLoad();
         }
-        
-      } catch (err) {
-        console.error('載入服務失敗:', err);
-        setError('載入服務失敗');
-        // 保持現有數據，不清空
-      } finally {
-        setLoading(false); // 完成載入
+      });
+    } catch (subscribeError) {
+      console.error('❌ ServiceCategoryPage: 建立監聽時出錯:', subscribeError);
+      // 實時監聽失敗，使用降級方案
+      fallbackLoad();
+    }
+
+    // 清理函數
+    return () => {
+      try {
+        if (fallbackTimeout) {
+          clearTimeout(fallbackTimeout);
+        }
+        console.log(`🛑 ServiceCategoryPage: 停止監聽分類 ${selectedCategory}`);
+        if (unsubscribe && typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      } catch (cleanupError) {
+        console.error('❌ ServiceCategoryPage: 清理監聽器時出錯:', cleanupError);
       }
     };
-
-    loadServices();
   }, [selectedCategory]);
 
   // 服務分類
@@ -278,12 +356,14 @@ const ServiceCategoryPage = () => {
   };
 
   // 篩選服務
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPrice = service.price >= priceRange[0] && service.price <= priceRange[1];
+  const filteredServices = (services || []).filter(service => {
+    const matchesSearch = service.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         service.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const servicePrice = typeof service.price === 'number' ? service.price : 0;
+    const matchesPrice = servicePrice >= priceRange[0] && servicePrice <= priceRange[1];
     const matchesTags = selectedTags.length === 0 || 
-                       selectedTags.some(tag => service.tags.includes(tag));
+                       (service.tags && Array.isArray(service.tags) && 
+                        selectedTags.some(tag => service.tags.includes(tag)));
     
     return matchesSearch && matchesPrice && matchesTags;
   });
@@ -436,12 +516,12 @@ const ServiceCategoryPage = () => {
                     
                     {/* 標籤 */}
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {service.tags.slice(0, 1).map((tag) => (
+                      {(service.tags && Array.isArray(service.tags) ? service.tags : []).slice(0, 1).map((tag) => (
                         <span key={tag} className="px-2 py-1 text-[10px] md:text-xs bg-accent-100 text-accent-700 rounded-full">
                           {tag}
                         </span>
                       ))}
-                      {service.tags.length > 1 && (
+                      {(service.tags && Array.isArray(service.tags) && service.tags.length > 1) && (
                         <span className="px-2 py-1 text-[10px] md:text-xs bg-primary-100 text-primary-600 rounded-full">
                           +{service.tags.length - 1}
                         </span>
@@ -513,12 +593,12 @@ const ServiceCategoryPage = () => {
                         
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                           <div className="flex flex-wrap gap-1 md:gap-2">
-                            {service.tags.slice(0, 3).map((tag) => (
+                            {(service.tags && Array.isArray(service.tags) ? service.tags : []).slice(0, 3).map((tag) => (
                               <span key={tag} className="px-2 py-1 text-[10px] md:text-xs bg-accent-100 text-accent-700 rounded-full">
                                 {tag}
                               </span>
                             ))}
-                            {service.tags.length > 3 && (
+                            {(service.tags && Array.isArray(service.tags) && service.tags.length > 3) && (
                               <span className="px-2 py-1 text-[10px] md:text-xs bg-primary-100 text-primary-600 rounded-full">
                                 +{service.tags.length - 3}
                               </span>

@@ -132,7 +132,7 @@
             logEl.scrollTop = logEl.scrollHeight;
         }
 
-        // 範例服務數據
+        // 範例服務數據（減少到3個）
         const sampleServices = [
             {
                 title: '專業網頁設計服務',
@@ -193,72 +193,9 @@
                 ],
                 rating: 4.6,
                 reviewCount: 18,
-                featured: false,
+                featured: true,
                 deliveryDays: 21,
                 revisions: 2,
-                status: 'active',
-                createdAt: serverTimestamp()
-            },
-            {
-                title: '影片剪輯與後製',
-                description: '專業影片剪輯服務，包含特效製作、配音、字幕等。適用於商業廣告、教學影片等。',
-                category: '影音製作',
-                price: 12000,
-                currency: 'TWD',
-                creatorId: 'creator4',
-                creatorName: '影像工作室',
-                creatorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
-                tags: ['影片', '剪輯', '特效'],
-                images: [
-                    'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop'
-                ],
-                rating: 4.7,
-                reviewCount: 15,
-                featured: true,
-                deliveryDays: 10,
-                revisions: 3,
-                status: 'active',
-                createdAt: serverTimestamp()
-            },
-            {
-                title: '電商網站開發',
-                description: '打造專業電商平台，支援金流、物流整合，RWD響應式設計，助您開展線上事業。',
-                category: '網頁設計',
-                price: 45000,
-                currency: 'TWD',
-                creatorId: 'creator5',
-                creatorName: '網站開發團隊',
-                creatorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
-                tags: ['電商', '開發', '金流'],
-                images: [
-                    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop'
-                ],
-                rating: 4.9,
-                reviewCount: 28,
-                featured: true,
-                deliveryDays: 30,
-                revisions: 5,
-                status: 'active',
-                createdAt: serverTimestamp()
-            },
-            {
-                title: 'SEO網站優化',
-                description: '提升網站搜尋引擎排名，包含關鍵字分析、內容優化、技術SEO等完整服務。',
-                category: '數位行銷',
-                price: 20000,
-                currency: 'TWD',
-                creatorId: 'creator6',
-                creatorName: 'SEO專家',
-                creatorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face',
-                tags: ['SEO', '優化', '分析'],
-                images: [
-                    'https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&h=600&fit=crop'
-                ],
-                rating: 4.5,
-                reviewCount: 22,
-                featured: false,
-                deliveryDays: 14,
-                revisions: 3,
                 status: 'active',
                 createdAt: serverTimestamp()
             }
@@ -309,6 +246,18 @@
                         specialties: ['品牌設計', 'Logo設計', '平面設計'],
                         rating: 4.9,
                         completedOrders: 89,
+                        memberSince: new Date('2020-01-10'),
+                        verified: true,
+                        createdAt: serverTimestamp()
+                    },
+                    {
+                        id: 'creator3',
+                        name: '行銷達人',
+                        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                        bio: '數位行銷專家，擅長社群媒體經營和廣告投放策略',
+                        specialties: ['數位行銷', '社群媒體', 'SEO'],
+                        rating: 4.6,
+                        completedOrders: 72,
                         memberSince: new Date('2020-01-10'),
                         verified: true,
                         createdAt: serverTimestamp()

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getFeaturedServices } from '../firebase/firestore';
+import { Link } from 'react-router-dom';
+import { ref, onValue } from 'firebase/database';
+import { realtimeDb } from '../firebase/config';
 
 // 預設精選服務數據（作為後備）
 const defaultServices = [
@@ -12,7 +14,8 @@ const defaultServices = [
     reviewCount: 24,
     creatorName: '設計師小王',
     creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    images: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop']
+    images: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop'],
+    category: '網頁設計'
   },
   {
     id: 'default-2',
@@ -23,31 +26,55 @@ const defaultServices = [
     reviewCount: 32,
     creatorName: '創意工作室',
     creatorAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b632?w=150&h=150&fit=crop&crop=face',
-    images: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop']
+    images: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop'],
+    category: '平面設計'
   }
 ];
 
 const FeaturedServices = () => {
-  const [featuredServices, setFeaturedServices] = useState(defaultServices); // 設置預設值
-  const [loading, setLoading] = useState(false); // 改為 false，立即顯示預設內容
+  const [featuredServices, setFeaturedServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadFeaturedServices = async () => {
+    const servicesRef = ref(realtimeDb, 'services');
+    
+    const unsubscribe = onValue(servicesRef, (snapshot) => {
       try {
-        const services = await getFeaturedServices();
-        if (services && services.length > 0) {
-          setFeaturedServices(services); // 只有在有數據時才更新
+        setLoading(true);
+        const data = snapshot.val();
+        if (data) {
+          // 轉換為陣列並過濾出精選服務
+          const servicesArray = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+          
+          const featured = servicesArray
+            .filter(service => {
+              const isPublished = service.published !== false;
+              const isFeatured = service.featured === true;
+              console.log(`🔍 服務 ${service.title}: published=${service.published}, featured=${service.featured}, 符合條件=${isPublished && isFeatured}`);
+              return isPublished && isFeatured;
+            })
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+            .slice(0, 6);
+          
+          console.log(`✅ FeaturedServices: 找到 ${featured.length} 個精選服務`);
+          setFeaturedServices(featured);
+        } else {
+          setFeaturedServices([]);
         }
+        setError(null);
       } catch (err) {
-        setError('載入精選服務失敗');
         console.error('載入精選服務失敗:', err);
-        // 保留預設服務，不設置錯誤狀態
+        setError('載入服務失敗');
+      } finally {
+        setLoading(false);
       }
-      // 移除 loading 狀態設置，因為我們已經有預設內容
-    };
+    });
 
-    loadFeaturedServices();
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -62,13 +89,44 @@ const FeaturedServices = () => {
           </p>
         </div>
 
+        {/* 載入中狀態 */}
+        {loading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600">載入精選服務中...</p>
+          </div>
+        )}
+
+        {/* 錯誤狀態 */}
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+            >
+              重試
+            </button>
+          </div>
+        )}
+
+        {/* 沒有服務時的狀態 */}
+        {!loading && !error && featuredServices.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">目前沒有精選服務</p>
+            <p className="text-sm text-gray-500">請點擊下方按鈕初始化數據</p>
+          </div>
+        )}
+
         {/* 水平滾動容器 */}
-        <div className="relative">
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+        {!loading && !error && featuredServices.length > 0 && (
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
             {featuredServices.map((service) => (
-              <div
+              <Link
                 key={service.id}
-                className="flex-none w-52 bg-white border border-primary-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 cursor-pointer snap-start"
+                to={`/services/${encodeURIComponent(service.category || 'general')}/${service.id}`}
+                className="flex-none w-52 bg-white border border-primary-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 cursor-pointer snap-start block no-underline"
               >
                 {/* 圖片區域 */}
                 <div className="w-full h-32 bg-primary-50 rounded-lg mb-3 overflow-hidden">
@@ -106,10 +164,11 @@ const FeaturedServices = () => {
                 <div className="text-lg font-bold text-accent-600">
                   {service.currency === 'TWD' ? 'NT$ ' : '$'}{service.price?.toLocaleString()}
                 </div>
-              </div>
+              </Link>
             ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
