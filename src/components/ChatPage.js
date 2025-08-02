@@ -89,10 +89,10 @@ const ChatPage = () => {
     });
 
     conversationsRef.current = unsubscribe;
-  }, [isRealUser, user.uid, creatorId, creatorName]);
+  }, [isRealUser, user.uid, creatorId, creatorName, createNewConversation]);
 
   // 創建新對話
-  const createNewConversation = async (participantId, participantName) => {
+  const createNewConversation = useCallback(async (participantId, participantName) => {
     if (!isRealUser) return;
 
     const chatId = generateChatId(user.uid, participantId);
@@ -126,7 +126,7 @@ const ChatPage = () => {
     } catch (error) {
       console.error('創建對話失敗:', error);
     }
-  };
+  }, [isRealUser, user.uid, user.displayName, user.email]);
 
   // 載入選中對話的訊息
   const loadMessages = (conversationId) => {
