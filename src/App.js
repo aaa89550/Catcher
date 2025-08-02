@@ -13,10 +13,8 @@ import LoginPage from './components/LoginPage';
 import ChatPage from './components/ChatPage';
 import SearchResultsPage from './components/SearchResultsPage';
 import HeroBanner from './components/HeroBanner';
-import InitDataButton from './components/InitDataButton';
 import ServiceUploadPage from './components/ServiceUploadPage';
 import BecomeCreatorPage from './components/BecomeCreatorPage';
-import FirebaseTestPage from './components/FirebaseTestPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { initializeServices, initializeCreators, initializeReviews } from './firebase/initData';
 import './styles/mobile.css';
@@ -28,7 +26,6 @@ const HomePage = () => (
     <SearchSection />
     <ServiceCategories />
     <FeaturedServices />
-    <InitDataButton />
   </main>
 );
 
@@ -62,7 +59,6 @@ const AppContent = () => {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/upload-service" element={<ServiceUploadPage />} />
         <Route path="/become-creator" element={<BecomeCreatorPage />} />
-        <Route path="/firebase-test" element={<FirebaseTestPage />} />
       </Routes>
       <Footer />
     </div>
