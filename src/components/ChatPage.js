@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { realtimeDb } from '../firebase/config';
@@ -50,7 +50,7 @@ const ChatPage = () => {
   }, [messages]);
 
   // 載入對話列表
-  const loadConversations = () => {
+  const loadConversations = useCallback(() => {
     if (!isRealUser) return;
 
     const userConversationsRef = ref(realtimeDb, `users/${user.uid}/conversations`);
@@ -89,7 +89,7 @@ const ChatPage = () => {
     });
 
     conversationsRef.current = unsubscribe;
-  };
+  }, [isRealUser, user.uid, creatorId, creatorName]);
 
   // 創建新對話
   const createNewConversation = async (participantId, participantName) => {

@@ -1,4 +1,4 @@
-import { ref, set, get, push, remove, onValue, off } from 'firebase/database';
+import { ref, get, onValue } from 'firebase/database';
 import { realtimeDb } from './config';
 
 // 獲取所有服務
